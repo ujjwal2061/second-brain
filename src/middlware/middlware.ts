@@ -9,7 +9,7 @@ declare module "express-serve-static-core" {
   }
 }
 
-function middleware(req:Request,res:Response,next:NextFunction){
+function Usermiddleware(req:Request,res:Response,next:NextFunction){
     console.log(`${req.method} request made to  ${req.path}`);
     try{
     const authHeader=req.headers.authorization;
@@ -36,4 +36,4 @@ function middleware(req:Request,res:Response,next:NextFunction){
         })
     }
 }
-export default middleware;
+export default Usermiddleware;

@@ -1,6 +1,7 @@
 import type {Request ,Response } from "express";
 import bcryptjs from  "bcryptjs";
-import {User} from  "../database/db.js"
+import  {User,Content} from  "../database/db.js"
+
 import jwt from "jsonwebtoken";
 
 const salt= await bcryptjs.genSalt(10);
@@ -35,7 +36,7 @@ export const Signup=async(req:Request,res:Response)=>{
       message:"Account created successfully"
     })
   }catch(error){
-    console.log("At the sinup route",error)
+    console.log("At the signup route",error)
     res.status(500).json({
     status:false,
     error:"Internal Server problem !!"
@@ -79,16 +80,74 @@ export const Login=async(req:Request,res:Response)=>{
     });
   }
 }
-// content cls
-export const Content=async(req:Request,res:Response)=>{
+// --> Add content
+export const ContentAdd=async(req:Request,res:Response)=>{
+
   const {title,link,tags}=req.body;
+  if(!title){
+    return res.status(404).json({
+      status:false,
+      error:"Title is requried !"
+    })
+  }
   try{
-//   if(){
+    await Content.create({
+      title:title,
+      link:link,
+      tags:tags
+    })
+  return res.status(201).json({
+    status:true,
+    message:"Content add successfully "
+  })
+  }catch(error){
+  console.error("At the add content route", error);
+    return res.status(500).json({
+      status: false,
+      error: "Internal Server Error!"
+    });
+  }
 
-//  }
- 
-  }catch(err){
-
+}
+// --> get content
+export const GetContent=async(req:Request,res:Response)=>{
+try{
+  const content=await Content.find({userId:req.userId});
+  return res.status(200).json({
+    statu:true,
+    data:content,
+  })
+}catch(error){
+  console.error("At the Get content", error);
+    return res.status(500).json({
+      status: false,
+      error: "Internal Server Error!"
+    });
+  }
+}
+// --> delete content
+export const ContentDelete=async(req:Request,res:Response)=>{
+  const {id}=req.params;
+  console.log("From the Delete Route",id)
+  try{
+    const contentId=await Content.findOne({_id:id ,userId:req.userId}) 
+    if(!contentId){
+      return res.status(404).json({
+        status:false,
+        errorr:"Did't Finf Content"
+      })
+    }
+    await Content.findByIdAndDelete({id})
+    return res.status(200).json({
+      status:true,
+      message:" Content delete Succefully "
+    })
+}catch(error){
+  console.error("At the delete route", error);
+    return res.status(500).json({
+      status: false,
+      error: "Internal Server Error!"
+    });
   }
 
 }
