@@ -1,5 +1,5 @@
-import { hash } from "bcryptjs";
-import mongoose, { Mongoose } from "mongoose";
+
+import mongoose from "mongoose";
 const {Schema} =mongoose;
 const userScheam=new Schema({
     username:{type:String ,required:true},

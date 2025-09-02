@@ -1,8 +1,9 @@
 import type {Request ,Response } from "express";
 import bcryptjs from  "bcryptjs";
-import  {User,Content} from  "../database/db.js"
+import  {User,Content,Link} from  "../database/db.js"
 
 import jwt from "jsonwebtoken";
+import { random } from "../hash.js";
 
 const salt= await bcryptjs.genSalt(10);
 export const Signup=async(req:Request,res:Response)=>{
@@ -12,15 +13,15 @@ export const Signup=async(req:Request,res:Response)=>{
     if(!email  || !username ||!pasword){
        res.status(400).json({
         status:false,
-        message:"Usernam and email  are required"
+        message:"Username and email  are required"
        })
     }
-    // chheck is user present already or not in db
+    // check is user present already or not in db
     const isExisting=await User.find({email})
     if(isExisting){
         return res.status(411).json({
             status:false,
-            message:"User allready Logged In !!"
+            message:"User already Logged In !!"
         })
     }
     // hasing password
@@ -83,7 +84,7 @@ export const Login=async(req:Request,res:Response)=>{
 // --> Add content
 export const ContentAdd=async(req:Request,res:Response)=>{
 
-  const {title,link,tags}=req.body;
+  const {title,link,tags ,type}=req.body;
   if(!title){
     return res.status(404).json({
       status:false,
@@ -92,9 +93,12 @@ export const ContentAdd=async(req:Request,res:Response)=>{
   }
   try{
     await Content.create({
-      title:title,
-      link:link,
-      tags:tags
+     title:title,
+     link:link,
+     userId:req.userId,
+     // array of the tags
+     tags:Array.isArray(tags)?tags:[tags],
+     type:type
     })
   return res.status(201).json({
     status:true,
@@ -112,7 +116,7 @@ export const ContentAdd=async(req:Request,res:Response)=>{
 // --> get content
 export const GetContent=async(req:Request,res:Response)=>{
 try{
-  const content=await Content.find({userId:req.userId});
+  const content=await Content.find({userId:req.userId}).populate("userId","username");
   return res.status(200).json({
     statu:true,
     data:content,
@@ -127,17 +131,17 @@ try{
 }
 // --> delete content
 export const ContentDelete=async(req:Request,res:Response)=>{
-  const {id}=req.params;
-  console.log("From the Delete Route",id)
+  const {contentId}=req.body;
+  console.log("From the Delete Route",contentId)
   try{
-    const contentId=await Content.findOne({_id:id ,userId:req.userId}) 
-    if(!contentId){
+    const content=await Content.findOne({_id:contentId}) 
+    if(!content){
       return res.status(404).json({
         status:false,
         errorr:"Did't Finf Content"
       })
     }
-    await Content.findByIdAndDelete({id})
+    await Content.findByIdAndDelete({contentId,userId:req.userId})
     return res.status(200).json({
       status:true,
       message:" Content delete Succefully "
@@ -150,4 +154,80 @@ export const ContentDelete=async(req:Request,res:Response)=>{
     });
   }
 
+}
+// share able link
+export const SahareLink=async(req:Request,res:Response)=>{
+  const share=req.body.share;
+  try{
+    if(share){
+      const existingLink=await Link.findOne({
+        userId:req.userId
+      });
+      if(existingLink){
+        return  res.status(200).json({
+          status:true,
+          hash:existingLink.hash
+        })
+      }
+      const hash=random(10);
+      await Link.create({
+        userId:req.userId,
+        hash:hash
+      })
+    }else{
+      await Link.deleteOne({
+        userId:req.userId
+      })
+    }
+     return res.status(200).json({
+      status:true,
+      
+      message:"Remove sharable Link"
+    })
+  }catch(error){
+    console.error("At the delete route", error);
+    return res.status(500).json({
+      status: false,
+      error: "Internal Server Error!"
+    });
+  }
+} 
+// after the share link
+export const ShareLink=async(req:Request,res:Response)=>{
+  const hash=req.params.shareLink;
+  try{
+    const link=await Link.findOne({
+      hash:hash
+    })
+    if(!link){
+      return res.status(400).json({
+        status:false,
+        error:"Can't get ShareLink Dcoument !"
+      })
+    }
+ // find the content 
+    const content=await Content.findOne({
+      userId:link?.userId
+    })
+    // find the userdata
+    const user=await User.findOne({
+     _id:link?.userId
+    })
+    if(!user){
+      return res.status(411).json({
+        status:false,
+        error:"User may not exist !!"
+      })
+    }
+    res.status(200).json({
+       username:user.username,
+       content:content
+    })
+  }catch(error){
+   console.error("At the delete route", error);
+    return res.status(500).json({
+      status: false,
+      error: "Internal Server Error!"
+    });
+  }
 }
