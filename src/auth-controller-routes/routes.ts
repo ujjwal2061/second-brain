@@ -86,7 +86,7 @@ export const Login=async(req:Request,res:Response)=>{
 // --> Add content
 export const ContentAdd=async(req:Request,res:Response)=>{
 
-  const {title,link,tags ,icons}=req.body;
+  const {title,link,tags ,icons,brain}=req.body;
   if(!title){
     return res.status(404).json({
       status:false,
@@ -99,7 +99,10 @@ export const ContentAdd=async(req:Request,res:Response)=>{
      link:link,
      userId:req.userId,
      // array of the tags
-     tags:tags,
+    tags: typeof tags === "string"
+    ? tags.split(",").map(t => t.trim()) // "youtube,vibe" → ["youtube","vibe"]
+    : tags,
+     brain:brain,
      type:icons
     })
   return res.status(201).json({
@@ -143,7 +146,7 @@ export const Getuser=async(req:Request,res:Response)=>{
 // --> get content
 export const GetContent=async(req:Request,res:Response)=>{
 try{
-  const content=await Content.findOne({userId:req.userId}).populate("userId","username","email");
+  const content=await Content.find({userId:req.userId}).populate("userId","username");
   return res.status(200).json({
     statu:true,
     data:content,

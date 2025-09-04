@@ -15,13 +15,18 @@ const ContentScheam=new Schema({
         type:String,
         enum:["youtube" , "twitter" ,"spotify"],
     },
+    brain:{
+        type:String,
+          enum:["youtube" , "twitter" ,"spotify"],
+
+    },
     tags:[String],
-    userId:{type:mongoose.Types.ObjectId,ref:"User",required:true}
+    userId:{type:mongoose.Types.ObjectId,ref:"user",required:true}
 },{timestamps:true})
  
 const LinkSchema =new Schema({
      hash:String,
-     userId:{type:mongoose.Types.ObjectId,ref:'User',required:true}
+     userId:{type:mongoose.Types.ObjectId,ref:'user',required:true}
 })
 
 export const Link=mongoose.model('link',LinkSchema)
