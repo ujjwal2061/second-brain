@@ -7,18 +7,25 @@ const userScheam=new Schema({
     password:{type:String,required:true}
 })
 
+
 const ContentScheam=new Schema({
     title:String,
     link:String,
-    tags:[{type:mongoose.Types.ObjectId, ref:"Tag"}],
+    icons:{
+        type:String,
+        enum:["youtube" , "twitter" ,"spotify"],
+    },
+    tags:[String],
     userId:{type:mongoose.Types.ObjectId,ref:"User",required:true}
-})
+},{timestamps:true})
  
 const LinkSchema =new Schema({
      hash:String,
      userId:{type:mongoose.Types.ObjectId,ref:'User',required:true}
 })
+
 export const Link=mongoose.model('link',LinkSchema)
 export const User=mongoose.model('user',userScheam);
 export const Content=mongoose.model('content',ContentScheam);
+
 

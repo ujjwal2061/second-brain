@@ -4,20 +4,21 @@ import  {User,Content,Link} from  "../database/db.js"
 
 import jwt from "jsonwebtoken";
 import { random } from "../hash.js";
-
+const JWT=process.env.JWT;
 const salt= await bcryptjs.genSalt(10);
+
 export const Signup=async(req:Request,res:Response)=>{
-  const {username,email ,pasword}=req.body;
+  const {username,email ,password}=req.body;
   try{
     // first chehck
-    if(!email  || !username ||!pasword){
+    if(!email  || !username ||!password){
        res.status(400).json({
         status:false,
         message:"Username and email  are required"
        })
     }
     // check is user present already or not in db
-    const isExisting=await User.find({email})
+    const isExisting=await User.findOne({email})
     if(isExisting){
         return res.status(411).json({
             status:false,
@@ -25,7 +26,7 @@ export const Signup=async(req:Request,res:Response)=>{
         })
     }
     // hasing password
-    const hashpassword= await bcryptjs.hashSync(pasword ,salt)
+    const hashpassword= await bcryptjs.hashSync(password ,salt)
     // creating user account
     await User.create({
       username:username,
@@ -66,15 +67,16 @@ export const Login=async(req:Request,res:Response)=>{
       })
     }
     // Send the  JWT token to user
-  const token=jwt.sign({id:user?._id},"secondbarian" ,{expiresIn:"7d"})
+   if(!JWT){
+     throw new Error ("Not JWT token ")
+   }
+  const token=jwt.sign({id:user?._id},JWT ,{expiresIn:"7d"})
     return res.status(200).json({
       status:true,
       message:"Login sucessfull",
       token:token
     })  
 }catch(error){
-
-    console.error("At the login route", error);
     return res.status(500).json({
       status: false,
       error: "Internal Server Error!"
@@ -84,7 +86,7 @@ export const Login=async(req:Request,res:Response)=>{
 // --> Add content
 export const ContentAdd=async(req:Request,res:Response)=>{
 
-  const {title,link,tags ,type}=req.body;
+  const {title,link,tags ,icons}=req.body;
   if(!title){
     return res.status(404).json({
       status:false,
@@ -97,8 +99,8 @@ export const ContentAdd=async(req:Request,res:Response)=>{
      link:link,
      userId:req.userId,
      // array of the tags
-     tags:Array.isArray(tags)?tags:[tags],
-     type:type
+     tags:tags,
+     type:icons
     })
   return res.status(201).json({
     status:true,
@@ -113,10 +115,35 @@ export const ContentAdd=async(req:Request,res:Response)=>{
   }
 
 }
+// get user Info
+export const Getuser=async(req:Request,res:Response)=>{
+  const userId=req.userId;
+  try{
+    const user=await User.findById({_id:userId}).select('-password');
+     if(!user){
+      return res.status(400).json({
+        status:false,
+        message:"Can't find user account !"
+      })
+     }
+   
+     return res.status(200).json({
+      status:true,
+      data:user,
+      message:"user infromation  !"
+     })
+  }catch(error){
+    res.status(500).json({
+      status:false,
+      message:"Something went Wrong !"
+    })
+  }
+
+}
 // --> get content
 export const GetContent=async(req:Request,res:Response)=>{
 try{
-  const content=await Content.find({userId:req.userId}).populate("userId","username");
+  const content=await Content.findOne({userId:req.userId}).populate("userId","username","email");
   return res.status(200).json({
     statu:true,
     data:content,
