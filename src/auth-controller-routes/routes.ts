@@ -186,8 +186,9 @@ export const ContentDelete=async(req:Request,res:Response)=>{
 
 }
 // share able link
-export const SahareLink=async(req:Request,res:Response)=>{
+export const ShareLink=async(req:Request,res:Response)=>{
   const share=req.body.share;
+  console.log("True or false ",share)
   try{
     if(share){
       const existingLink=await Link.findOne({
@@ -204,6 +205,11 @@ export const SahareLink=async(req:Request,res:Response)=>{
         userId:req.userId,
         hash:hash
       })
+      return res.status(200).json({
+        status:true,
+        hash,
+        message:"Share able Link !"
+      })
     }else{
       await Link.deleteOne({
         userId:req.userId
@@ -211,7 +217,6 @@ export const SahareLink=async(req:Request,res:Response)=>{
     }
      return res.status(200).json({
       status:true,
-      
       message:"Remove sharable Link"
     })
   }catch(error){
@@ -223,8 +228,9 @@ export const SahareLink=async(req:Request,res:Response)=>{
   }
 } 
 // after the share link
-export const ShareLink=async(req:Request,res:Response)=>{
+export const GetSharelinkcontent=async(req:Request,res:Response)=>{
   const hash=req.params.shareLink;
+  console.log("Link",hash)
   try{
     const link=await Link.findOne({
       hash:hash
