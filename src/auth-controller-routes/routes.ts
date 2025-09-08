@@ -160,7 +160,7 @@ export const GetContent = async (req: Request, res: Response) => {
 // --> delete content
 export const ContentDelete = async (req: Request, res: Response) => {
   const { contentId } = req.body;
-  console.log("From the Delete Route", contentId);
+ 
   try {
     const content = await Content.findOne({ _id: contentId });
     if (!content) {
@@ -240,11 +240,11 @@ export const GetSharelinkcontent = async (req: Request, res: Response) => {
     // find the content
     const content = await Content.findOne({
       userId: link?.userId,
-    });
+    }).populate("userId","username");
     // find the userdata
     const user = await User.findOne({
       _id: link?.userId,
-    });
+    })
     if (!user) {
       return res.status(411).json({
         status: false,
@@ -267,16 +267,18 @@ export const GetSharelinkcontent = async (req: Request, res: Response) => {
 
 export const GetBrainContent = async (req: Request, res: Response) => {
   const {brain} = req.params; 
+  const user_id=req.userId;
+  console.log("Testing id",user_id)
   try {
-    if (!brain) {
+    if (!brain || !user_id) {
       return res.status(400).json({
         status: false,
-        message: "No brain provide !",
+        message: "Account not Login !",
       });
     }
     // db check
     const data = await Content.find(
-      { brain: brain }
+      { brain: brain,userId:user_id }
     ).populate("userId", "username");
     if (!data) {
       return res.status(404).json({
@@ -284,6 +286,7 @@ export const GetBrainContent = async (req: Request, res: Response) => {
         message: "Content not found !",
       });
     }
+    console.log(data)
     return res.status(200).json({
       status: true,
       data,
