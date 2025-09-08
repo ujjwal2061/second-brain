@@ -11,7 +11,7 @@
 
  app.use(express.json());
  app.use(cors({
-     origin:["http://localhost:5173" ,"https://second-brain-eosin.vercel.app/"],
+     origin:["http://localhost:5173" ,"https://second-brain-eosin.vercel.app"],
     allowedHeaders:['Content-Type','Authorization'],
     methods:['GET','POST','DELETE','OPTIONS'],
     credentials:true
